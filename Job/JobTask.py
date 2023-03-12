@@ -1,9 +1,9 @@
 import boto3
 
-class JobTask:
+class GetAndStoreDataJob:
 
     def get_instance_and_ami_ids(self, all_instances):
-        instance_id, ami_id, date_launched = ""
+        instance_id, ami_id, date_launched = "", "", ""
 
         for r in all_instances['Reservations']:
             for instance in r['Instances']:
@@ -13,7 +13,10 @@ class JobTask:
 
         return instance_id, ami_id, date_launched
 
-    def save_data(self, table, instance_id, ami_id, date_launched):
+    def save_data(self, table_name, instance_id, ami_id, date_launched):
+        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+        table = dynamodb.Table(table_name)
+
         table.put_item(
             Item={
                 'instance_id': instance_id,
@@ -24,15 +27,15 @@ class JobTask:
 
 
 if __name__ == "__main__":
-    sec2 = boto3.client('ec2', region_name='us-east-1')
-    dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+    ec2 = boto3.client('ec2', region_name='us-east-1')
+
     all_instances = ec2.describe_instances()
     all_images = ec2.describe_images(Owners=['self'])
-    table = dynamodb.Table('instances-data')
 
-    worker = JobTask()
+    worker = GetAndStoreDataJob()
     instance_id, ami_id, date_launched = worker.get_instance_and_ami_ids(all_instances)
-    worker.save_data(table, instance_id, ami_id, date_launched)
+    worker.save_data('instances-data', instance_id, ami_id, date_launched)
+    print("Saved all data successfully!")
 
 #print("===== Custom AMIs =====")
 #for image in all_images['Images']:
