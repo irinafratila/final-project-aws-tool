@@ -1,5 +1,5 @@
 import boto3
-from JobTask import GetAndStoreDataJob
+from Job.JobTask import GetAndStoreDataJob
 from moto import *
 
 @mock_dynamodb
@@ -17,7 +17,7 @@ def test_job_task_save_data():
     worker = GetAndStoreDataJob()
     worker.save_data('test', '0012abcd563', '1134abdc789', '04/02/2022, 14:50:10')
 
-    response = table.get_item(Key={instance_id:'0012abcd563'})
+    response = table.get_item(Key={'instance_id':'0012abcd563'})
     output = response['Item']
 
     print(response)
