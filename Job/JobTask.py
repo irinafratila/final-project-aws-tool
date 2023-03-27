@@ -1,5 +1,13 @@
 import boto3
-
+import json
+def respond(err, res=None):
+    return {
+        'statusCode': '400' if err else '200',
+        'body': err.message if err else json.dumps(res),
+        'headers': {
+            'Content-Type': 'application/json',
+        },
+    }
 class GetAndStoreDataJob:
 
     def get_instance_and_ami_ids(self, all_instances):
@@ -29,16 +37,67 @@ class GetAndStoreDataJob:
 
 if __name__ == "__main__":
     ec2 = boto3.client('ec2', region_name='us-east-1')
+    s3 = boto3.client('s3', region_name='us-east-1')
+    s3_resource = boto3.resource('s3')
 
-    all_instances = ec2.describe_instances()
-    all_images = ec2.describe_images(Owners=['self'])
+    bucket_name = 'running-instances-data-if1'
+    key_name = 'running-ec2-instances.json'
 
-    worker = GetAndStoreDataJob()
-    data = worker.get_instance_and_ami_ids(all_instances)
+    #all_instances = ec2.describe_instances()
+    #
+    #worker = GetAndStoreDataJob()
+    #data = worker.get_instance_and_ami_ids(all_instances)
+    #worker.save_data('instances-data',data)
+    #print("Saved all data successfully!")
 
-    worker.save_data('instances-data',data)
-    print("Saved all data successfully!")
+    # --- Get instance IDs ---
+    all_instances = ec2.describe_instances(
+        Filters=[
+            {
+                'Name': 'instance-state-name',
+                'Values': [
+                    'running',
+                ]
+            },
+        ]
+    )
 
-#print("===== Custom AMIs =====")
-#for image in all_images['Images']:
-    #print("ImageID :", image['ImageId'], "; Image name :", image['Name'],"; Creation date :", image['CreationDate'])
+    instance_data = []  # A list of dictionaries
+    for r in all_instances['Reservations']:
+        for instance in r['Instances']:
+            instance_id = instance['InstanceId']
+            ami_id = instance['ImageId']
+            date_launched = instance['LaunchTime'].strftime("%m/%d/%Y, %H:%M:%S")
+            instance_data.append({
+                'instance_id': instance_id,
+                'ami_id': ami_id,
+                'date_launched': date_launched
+            })
+
+    #print(instance_data)
+
+    # --- Check if running-ec2-instances.json already exists in the bucket ---
+    for file in s3_resource.Bucket(bucket_name).objects.all():
+        if file.key == key_name:
+            # delete file
+            s3.delete_object(Bucket=bucket_name,
+                            Key=key_name)
+
+
+    # --- Store data in S3 bucket ---
+    try:
+        ...
+        #response = s3.put_object(Body=json.dumps(instance_data), Bucket=bucket_name, Key=key_name)
+        #print(respond(None, response))
+
+    except:
+        print(respond(RuntimeError('Could not create S3 object of currently running instances')))
+
+
+
+
+    print("===== Custom AMIs =====")
+    ami_data_response = s3.get_object(
+        Bucket='custom-amis-data-if1',
+        Key='custom-amis-data.json',
+    )
