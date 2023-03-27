@@ -1,25 +1,36 @@
 <!DOCTYPE html>
 <html>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
 <head>
     <meta charset="UTF-8">
     <title> Auditing tool web app</title>
     <style>
-    body {
-        background-color: #d3c8d5;
+        button {
+            color: #ff00fb;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 20px;
+            margin-left: 40px;
         }
-    button {
-        color: #ff00fb;
-        font-family: Arial, Helvetica, sans-serif;
-        font-size: 20px;
-        margin-left: 40px;
-        }
+
     </style>
     <script>
         function response_handler(response) {
             var instancesDict = JSON.parse(response).instances;
             var AMIsDict = JSON.parse(response).amis;
-            let element = document.getElementById("data");
-            element.innerHTML = instancesDict;
+
+            console.log(instancesDict);
+            console.log(AMIsDict);
+
+            // ------ TEMP FOR DEV -----
+            instancesDict = [
+                {"instance_id": "i-0cb1a88ff585f35b1", "ami_id": "ami-006dcf34c09e50022", "date_launched": "03/04/2023, 11:01:34"},
+                {"instance_id": "i-04a257efb240061ea", "ami_id": "ami-0cb3484c1a6f84067", "date_launched": "03/04/2023, 12:43:41"}];
+
+            AMIsDict = [
+                {"image_id": "ami-0cb3484c1a6f84067", "image_name": "CustomAMIRecipe 2023-03-04T11-20-20.189Z", "creation_date": "2023-03-04T11:35:22.000Z"}];
+            // ----- TEMP FOR DEV -----
 
         }
 
@@ -41,17 +52,74 @@
             }
 
             fetch("https://09zvg0tsra.execute-api.us-east-1.amazonaws.com/dev", GETRequest)
-            .then(response => response.text())
-            .then(result => response_handler(JSON.parse(result).body))
-            .catch(error => console.log('error', error));
+                .then(response => response.text())
+                .then(result => response_handler(JSON.parse(result).body))
+                .catch(error => console.log('error', error));
         }
     </script>
 </head>
 <body>
-<button type="button" onclick="callAPI()"> Make call to API Lambda function</button>
-<div id="data">
-    Hello, welcome
+<button type="button" class="btn btn-info" onclick="response_handler()"> Make call to API Lambda function</button>
+
+
+<div class="row">
+    <div class="card card-body">
+        <input id="searchInput" class="form-control" type="text">
+    </div>
 </div>
+
+<table class="table table-striped">
+    <tr class="bg-info"> </tr>
+    <th> ID </th>
+    <th> Image ID </th>
+    <th> Date launched </th>
+
+    <tbody id="instanceTable">
+
+    </tbody>
+
+    <script>
+
+        $('#searchInput').on('keyup', function(){
+            var value = $(this).val()
+            console.log('Input value:', value);
+
+        })
+        function buildTable() {
+            instancesDict = [
+                {
+                    "instance_id": "i-0cb1a88ff585f35b1",
+                    "ami_id": "ami-006dcf34c09e50022",
+                    "date_launched": "03/04/2023, 11:01:34"
+                },
+                {
+                    "instance_id": "i-04a257efb240061ea",
+                    "ami_id": "ami-0cb3484c1a6f84067",
+                    "date_launched": "03/04/2023, 12:43:41"
+                }];
+
+            AMIsDict = [
+                {
+                    "image_id": "ami-0cb3484c1a6f84067",
+                    "image_name": "CustomAMIRecipe 2023-03-04T11-20-20.189Z",
+                    "creation_date": "2023-03-04T11:35:22.000Z"
+                }];
+
+
+            var table = document.getElementById('instanceTable');
+            for (var i = 0; i < instancesDict.length; i++) {
+                var row = `<tr>
+                            <td> ${instancesDict[i].instance_id}</td>
+                            <td> ${instancesDict[i].ami_id}</td>
+                            <td> ${instancesDict[i].date_launched}</td>
+                            </tr>`
+                table.innerHTML += row;
+            }
+        }
+
+        buildTable();
+    </script>
+</table>
 
 </body>
 </html>
