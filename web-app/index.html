@@ -23,15 +23,6 @@
             console.log(instancesDict);
             console.log(AMIsDict);
 
-            // ------ TEMP FOR DEV -----
-            instancesDict = [
-                {"instance_id": "i-0cb1a88ff585f35b1", "ami_id": "ami-006dcf34c09e50022", "date_launched": "03/04/2023, 11:01:34"},
-                {"instance_id": "i-04a257efb240061ea", "ami_id": "ami-0cb3484c1a6f84067", "date_launched": "03/04/2023, 12:43:41"}];
-
-            AMIsDict = [
-                {"image_id": "ami-0cb3484c1a6f84067", "image_name": "CustomAMIRecipe 2023-03-04T11-20-20.189Z", "creation_date": "2023-03-04T11:35:22.000Z"}];
-            // ----- TEMP FOR DEV -----
-
         }
 
         var callAPI = ()=>{
@@ -59,67 +50,219 @@
     </script>
 </head>
 <body>
-<button type="button" class="btn btn-info" onclick="response_handler()"> Make call to API Lambda function</button>
 
-
+<h1> Currently running instances info</h1>
 <div class="row">
     <div class="card card-body">
-        <input id="searchInput" class="form-control" type="text">
+        <input id="searchInputInstances" class="form-control" type="text">
     </div>
 </div>
 
 <table class="table table-striped">
     <tr class="bg-info"> </tr>
-    <th> ID </th>
+    <th> Instance ID </th>
     <th> Image ID </th>
-    <th> Date launched </th>
+    <th id="instanceTableDateColumn" data-column="date_launched" data-order="desc"> Date launched </th>
+
+    <!-- data-column will allow us to grab the attr we sort the data by
+      the initial sorting will be descending-->
 
     <tbody id="instanceTable">
 
     </tbody>
 
     <script>
+        instancesDict = [
+            {
+                "instance_id": "i-0cb1a88ff585f35b1",
+                "ami_id": "ami-006dcf34c09e50022",
+                "date_launched": "04/03/2023, 11:01:34"
+            },
+            {
+                "instance_id": "i-04a257efb240061ea",
+                "ami_id": "ami-0cb3484c1a6f84067",
+                "date_launched": "04/03/2023, 12:43:41"
+            },
+            {
+                "instance_id": "i-0fcb9a4d62bdd45e8",
+                "ami_id": "ami-005f9685cb30f234b",
+                "date_launched": "27/03/2023, 20:05:35"
+            }]
 
-        $('#searchInput').on('keyup', function(){
-            var value = $(this).val()
-            console.log('Input value:', value);
 
+        $('#searchInputInstances').on('keyup', function(){
+            var inputVal = $(this).val()
+            var filteredRows = searchInstancesTable(inputVal, instancesDict);
+            buildInstancesTable(filteredRows);
         })
-        function buildTable() {
-            instancesDict = [
-                {
-                    "instance_id": "i-0cb1a88ff585f35b1",
-                    "ami_id": "ami-006dcf34c09e50022",
-                    "date_launched": "03/04/2023, 11:01:34"
-                },
-                {
-                    "instance_id": "i-04a257efb240061ea",
-                    "ami_id": "ami-0cb3484c1a6f84067",
-                    "date_launched": "03/04/2023, 12:43:41"
-                }];
 
-            AMIsDict = [
-                {
-                    "image_id": "ami-0cb3484c1a6f84067",
-                    "image_name": "CustomAMIRecipe 2023-03-04T11-20-20.189Z",
-                    "creation_date": "2023-03-04T11:35:22.000Z"
-                }];
+        $('#instanceTableDateColumn').on('click', function(){
+            var column = $(this).data('column')
+            var order = $(this).data('order')
+            console.log(column, order)
 
+            if (order == 'desc'){
+                $(this).data('order', 'asc')
 
+                // Only sorting by the date launched
+                instancesDict = instancesDict.sort((a,b) => sortByDate(a['date_launched'],b['date_launched'], 'asc'))
+                buildInstancesTable(instancesDict)
+
+            } else {
+                $(this).data('order', 'desc')
+                instancesDict = instancesDict.sort((a,b) => sortByDate(a['date_launched'],b['date_launched'], 'desc'))
+                buildInstancesTable(instancesDict)
+            }
+        })
+        function searchInstancesTable(searchValue, data){
+            var filteredData = [];
+            for (var i = 0; i < data.length; i++) {
+                searchValue = searchValue.toLowerCase(); // No case sensitivity
+                var instance_id = data[i].instance_id.toLowerCase();
+
+                if (instance_id.includes(searchValue)){
+                    filteredData.push(data[i])
+                }
+            }
+            return filteredData;
+        }
+
+        function buildInstancesTable(instanceData) {
             var table = document.getElementById('instanceTable');
-            for (var i = 0; i < instancesDict.length; i++) {
+            table.innerHTML = '';
+            for (var i = 0; i < instanceData.length; i++) {
                 var row = `<tr>
-                            <td> ${instancesDict[i].instance_id}</td>
-                            <td> ${instancesDict[i].ami_id}</td>
-                            <td> ${instancesDict[i].date_launched}</td>
+                            <td> ${instanceData[i].instance_id}</td>
+                            <td> ${instanceData[i].ami_id}</td>
+                            <td> ${instanceData[i].date_launched}</td>
                             </tr>`
                 table.innerHTML += row;
             }
         }
 
-        buildTable();
+        function sortByDate(a,b, descOrAsc) {
+            // sorts descending
+            if (descOrAsc == 'desc') {
+                if (a > b) {
+                    return 1
+                } else {
+                    return -1
+                }
+            } else if (descOrAsc == 'asc') {
+                if (a < b) {
+                    return 1
+                } else {
+                    return -1
+                }
+            } else {
+                return "Invalid option for descending or ascending"
+            }
+        }
+
+        buildInstancesTable(instancesDict)
     </script>
 </table>
+
+
+
+
+//////////////////////////////////////
+
+
+
+
+
+<h1> Custom AMIs created </h1>
+<div class="row">
+    <div class="card card-body">
+        <input id="searchInputImages" class="form-control" type="text">
+    </div>
+</div>
+<table class="table table-striped">
+    <tr class="bg-info"> </tr>
+    <th> Image ID </th>
+    <th> Image name </th>
+    <th id="imagesTableDateColumn" data-column="creation_date" data-order="desc"> Date created </th>
+
+    <tbody id="AMIsTable">
+    </tbody>
+
+    <script>
+        AMIsDict = [
+            {
+                "image_id": "ami-0e6b71a8147764d2c",
+                "image_name": "CustomAMIRecipe3",
+                "creation_date": "27/03/2023, 19:44:25"
+            },
+            {
+                "image_id": "ami-026356055b38dcfc7",
+                "image_name": "CustomAMIRecipe2",
+                "creation_date": "27/03/2023, 19:18:10"},
+            {
+                "image_id": "ami-0cb3484c1a6f84067",
+                "image_name": "CustomAMIRecipe 2023-03-04T11-20-20.189Z",
+                "creation_date": "04/03/2023, 11:35:22"}]
+
+        $('#searchInputImages').on('keyup', function(){
+            var inputVal = $(this).val()
+            var filteredRows = searchImagesTable(inputVal, AMIsDict);
+            buildCustomImagesTable(filteredRows);
+        })
+
+        $('#imagesTableDateColumn').on('click', function(){
+            var column = $(this).data('column')
+            var order = $(this).data('order')
+            console.log(column, order)
+
+            if (order == 'desc'){
+                $(this).data('order', 'asc')
+
+                // Only sorting by the date launched
+                AMIsDict = AMIsDict.sort((a,b) => sortByDate(a['creation_date'],b['creation_date'], 'asc'))
+                buildCustomImagesTable(AMIsDict)
+
+            } else {
+                $(this).data('order', 'desc')
+                AMIsDict = AMIsDict.sort((a,b) => sortByDate(a['creation_date'],b['creation_date'], 'desc'))
+                buildCustomImagesTable(AMIsDict)
+            }
+        })
+
+
+        function searchImagesTable(searchValue, data){
+            var filteredData = [];
+            for (var i = 0; i < data.length; i++) {
+                searchValue = searchValue.toLowerCase(); // No case sensitivity
+                var imageID = data[i].image_id.toLowerCase();
+
+                if (imageID.includes(searchValue)){
+                    filteredData.push(data[i])
+                }
+            }
+            return filteredData;
+        }
+
+        function buildCustomImagesTable(AMIData) {
+            var table = document.getElementById('AMIsTable');
+            table.innerHTML = '';
+            for (var i = 0; i < AMIData.length; i++) {
+                var row = `<tr>
+                            <td> ${AMIData[i].image_id}</td>
+                            <td> ${AMIData[i].image_name}</td>
+                            <td> ${AMIData[i].creation_date}</td>
+                            </tr>`
+                table.innerHTML += row;
+            }
+        }
+        buildCustomImagesTable(AMIsDict);
+    </script>
+</table>
+
+
+
+
+
+<button type="button" class="btn btn-info" onclick="callAPI()"> Make call to API Lambda function</button>
 
 </body>
 </html>
