@@ -1,12 +1,14 @@
 import json
 import boto3
 
-
+# When a GET request comes through the API, it will be directed to this function.
+# This function will get the instances and images data stored in their respective
+# S3 buckets, format it, and send it back to be displayed on the website.
 def lambda_handler(event, context):
     s3 = boto3.client('s3', region_name='us-east-1')
     lambda_client = boto3.client('lambda', region_name='us-east-1')
 
-    # Update data in S3 buckets before retrieving it and seding it thorugh the API
+    # Update data in S3 buckets before retrieving it and sending it through the API
     update_buckets_response = lambda_client.invoke(FunctionName='auditingtool-updateInstancesAndImagesBuckets',
                                                    InvocationType='Event')
 

@@ -21,7 +21,9 @@ def respond(err, res=None):
         },
     }
 
-
+# The main function. It makes the necessary connections to AWS services,
+# gets the instances and images data, and stores it in two separate
+# S3 buckets.
 def lambda_handler(event, context):
     # --- Get instances that are running ---
     all_instances = ec2.describe_instances(
