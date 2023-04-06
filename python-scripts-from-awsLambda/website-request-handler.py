@@ -8,7 +8,10 @@ def lambda_handler(event, context):
     s3 = boto3.client('s3', region_name='us-east-1')
     lambda_client = boto3.client('lambda', region_name='us-east-1')
 
-    # Update data in S3 buckets before retrieving it and sending it through the API
+    # Invoking the respective Lambda function asynchronously, which will update the S3 buckets
+    # before getting the data and sending it back here.
+    # Adapted from AWS Boto3/Lambda/Client documentation
+    # Accessible at https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/lambda/client/invoke.html
     update_buckets_response = lambda_client.invoke(FunctionName='auditingtool-updateInstancesAndImagesBuckets',
                                                    InvocationType='Event')
 

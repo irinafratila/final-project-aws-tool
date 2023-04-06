@@ -2,7 +2,6 @@ import boto3
 import json
 from datetime import datetime
 
-dynamo = boto3.client('dynamodb', region_name='us-east-1')
 ec2 = boto3.client('ec2', region_name='us-east-1')
 s3 = boto3.client('s3', region_name='us-east-1')
 s3_resource = boto3.resource('s3')
@@ -25,7 +24,9 @@ def respond(err, res=None):
 # gets the instances and images data, and stores it in two separate
 # S3 buckets.
 def lambda_handler(event, context):
-    # --- Get instances that are running ---
+    # Get instances that are running
+    # Used filtering method by John Rotenstein (September 2019)
+    # Accessible at https://stackoverflow.com/a/69147625
     all_instances = ec2.describe_instances(
         Filters=[
             {
@@ -49,14 +50,14 @@ def lambda_handler(event, context):
                 'date_launched': date_launched
             })
 
-    # Check if running-ec2-instances.json already exists in the bucket,  delete it
+    # Check if running-ec2-instances.json already exists in the bucket, delete it
     # if so. This is to refresh the resources and delete entries that have been terminated.
     for file in s3_resource.Bucket('running-instances-data-if1').objects.all():
         if file.key == 'running-ec2-instances.json':
             s3.delete_object(Bucket='running-instances-data-if1',
                              Key='running-ec2-instances.json')
 
-    # --- Get data of AMIs that are custom-made by the user ----
+    # Get data of AMIs that are custom-made by the user
     all_images = ec2.describe_images(Owners=['self'])
     images_data = []
     for image in all_images['Images']:
@@ -79,8 +80,10 @@ def lambda_handler(event, context):
             s3.delete_object(Bucket='custom-amis-data-if1',
                              Key='custom-amis-data.json')
 
-    # --- Store data in S3 bucket ---
+    # Store data in S3 bucket
     try:
+        # Used the "Body=json.dumps(data)" snippet by Alexander Santos (July 2021)
+        # Accessible at https://stackoverflow.com/a/62839445
         instances_response = s3.put_object(Body=json.dumps(instance_data), Bucket='running-instances-data-if1',
                                            Key='running-ec2-instances.json')
         amis_response = s3.put_object(Body=json.dumps(images_data), Bucket='custom-amis-data-if1',

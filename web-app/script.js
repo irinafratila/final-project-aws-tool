@@ -23,10 +23,6 @@ function sortByDate(a,b, descOrAsc) {
     }
 }
 
-/**
- * Adapted from Dennis Ivy (2019) JSON Array to HTML Table with Javascript
- * Available at https://www.youtube.com/watch?v=XmdOZ5NSqb8&list=PL-51WBLyFTg1l3K0aTH0uX6PzgaLfzJBK&index=1
- */
 function buildInstancesTable(instanceData) {
     var table = document.getElementById('instanceTable');
     table.innerHTML = '';
